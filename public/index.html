@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CricPulse — Live Cricket Scores, Win Probability & Predictions</title>
+  <meta name="description" content="Fast live cricket scores, ball-by-ball scorecards, AI win probability meter, and daily match winner predictions." />
+  <style>
+    :root {
+      --bg: #070b14;
+      --card: #111827;
+      --surface: #1e293b;
+      --border: rgba(148, 163, 184, 0.14);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --gold: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+
+    .shell {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 14px 14px 48px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #2563eb);
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+    }
+
+    .brand h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; }
+
+    .streak-pill {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: var(--gold);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #070b14;
+      border-color: var(--accent);
+    }
+
+    .match-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .match-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .match-card:hover {
+      border-color: rgba(56, 189, 248, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--red);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.8); }
+    }
+
+    .team-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+
+    .team-name {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+
+    .team-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .score-val {
+      font-weight: 800;
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-overs {
+      font-weight: 500;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    .card-status {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .picked-tag {
+      font-size: 0.72rem;
+      background: rgba(34, 197, 94, 0.14);
+      color: var(--green);
+      padding: 3px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .meta-bar {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .skeleton {
+      background: var(--card);
+      border-radius: 16px;
+      height: 130px;
+      border: 1px solid var(--border);
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <a href="/" class="brand">
+        <div class="logo">🏏</div>
+        <h1>CricPulse</h1>
+      </a>
+      <div class="streak-pill">🔥 Streak: <span id="streakCount">0</span></div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-filter="all">All Matches</button>
+      <button class="tab" data-filter="live">🔴 Live</button>
+      <button class="tab" data-filter="completed">Completed</button>
+    </div>
+
+    <main id="matchList" class="match-list">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </main>
+
+    <div class="meta-bar" id="metaBar">Loading live scores...</div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "cricpulse_predictions_v1";
+    let allMatches = [];
+    let activeFilter = "all";
+
+    function loadPredictions() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { streak: 0, bestStreak: 0, picks: {} };
+      } catch {
+        return { streak: 0, bestStreak: 0, picks: {} };
+      }
+    }
+
+    function savePredictions(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // Auto-resolve any finished match predictions so streak stays accurate
+    function resolvePredictions(matches) {
+      const store = loadPredictions();
+      let changed = false;
+
+      matches.forEach((m) => {
+        const pick = store.picks[m.id];
+        if (pick && !pick.resolved && m.status === "completed" && m.winner) {
+          pick.resolved = true;
+          pick.correct = pick.team.toLowerCase() === m.winner.toLowerCase();
+          if (pick.correct) {
+            store.streak += 1;
+            store.bestStreak = Math.max(store.bestStreak, store.streak);
+          } else {
+            store.streak = 0;
+          }
+          changed = true;
+        }
+      });
+
+      if (changed) savePredictions(store);
+      document.getElementById("streakCount").textContent = store.streak;
+      return store;
+    }
+
+    function renderMatches() {
+      const store = resolvePredictions(allMatches);
+      const list = document.getElementById("matchList");
+      const filtered = activeFilter === "all"
+        ? allMatches
+        : allMatches.filter((m) => m.status === activeFilter);
+
+      if (!filtered.length) {
+        list.innerHTML = `<p style="color:var(--muted);text-align:center;padding:30px 0;">No matches in this category right now.</p>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map((m) => {
+        const t1 = m.teams[0];
+        const t2 = m.teams[1];
+        const inn1 = m.innings.find((i) => i.team.toLowerCase() === t1.name.toLowerCase());
+        const inn2 = m.innings.find((i) => i.team.toLowerCase() === t2.name.toLowerCase());
+        const pick = store.picks[m.id];
+
+        const badge = m.status === "live"
+          ? `<span class="live-badge"><span class="dot"></span>Live</span>`
+          : `<span>${m.status.toUpperCase()}</span>`;
+
+        const formatScore = (inn) => inn
+          ? `<span class="score-val">${inn.runs}/${inn.wickets}<span class="score-overs">(${inn.overs})</span></span>`
+          : `<span class="score-overs">Yet to bat</span>`;
+
+        return `
+          <a class="match-card" href="/match/${encodeURIComponent(m.id)}">
+            <div class="card-top">
+              <span>${m.format} • ${m.series}</span>
+              ${badge}
+            </div>
+            <div class="team-row">
+              <div class="team-name">
+                <span class="team-dot" style="background:${t1.color}"></span>
+                <span>${t1.name}</span>
+              </div>
+              ${formatScore(inn1)}
+            </div>
+            <div class="team-row">
+              <div class="team-name">
+                <span class="team-dot" style="background:${t2.color}"></span>
+                <span>${t2.name}</span>
+              </div>
+              ${formatScore(inn2)}
+            </div>
+            <div class="card-status">
+              <span>${m.statusText}</span>
+              ${pick ? `<span class="picked-tag">Picked: ${pick.short}</span>` : `<span>Scorecard →</span>`}
+            </div>
+          </a>
+        `;
+      }).join("");
+    }
+
+    async function fetchMatches() {
+      try {
+        const res = await fetch("/api/matches");
+        const json = await res.json();
+        allMatches = json.matches || [];
+        renderMatches();
+        const time = new Date(json.cachedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        document.getElementById("metaBar").textContent = `Auto-refreshes every 30s • Updated ${time} (${json.source})`;
+      } catch {
+        document.getElementById("metaBar").textContent = "Unable to load scores. Retrying in 30s...";
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeFilter = btn.dataset.filter;
+        renderMatches();
+      });
+    });
+
+    fetchMatches();
+    setInterval(fetchMatches, 30000);
+  </script>
+</body>
+</html>
